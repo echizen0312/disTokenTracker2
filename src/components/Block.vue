@@ -70,7 +70,6 @@
                     <pre style="margin-bottom: 0;">
 {{JSON.stringify(block, null, 4)}}
                     </pre>
-
                 </b-tab>
             </b-tabs>
         </b-card>
@@ -99,15 +98,20 @@
             self.block_num = Number.parseInt(self.$route.params.block_num)
             self.items.push(
                 {
-                    text: `区块 # ${self.block_num}`,
-                    to: {name: 'Home'}
+                    text: `区块 # ${self.block_num}`
                 }
             )
             if (self.block_num != 0) {
                 self.GetInfo()
             }
         },
-        watch: {},
+        watch: {
+            // 如果路由有变化，会再次执行该方法
+            '$route': function () {
+                this.block_num = Number.parseInt(this.$route.params.block_num)
+                this.GetInfo()
+            }
+        },
         methods: {
             GetMoment: function (date) {
                 return moment(date).utcOffset(960).format('YYYY-MM-DD HH:mm:ss')

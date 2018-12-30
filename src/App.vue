@@ -37,10 +37,22 @@
                 // netId: '001',
                 // netName: 'testNet',
                 // chainId: 'cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f',
+                // httpEndpoint: 'http://10.255.1.225:8888',
+                // tokenList: [],
                 netId: '999',
                 netName: 'MainNet',
                 chainId: 'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906',
                 httpEndpoint: 'https://eos.greymass.com',
+                tokenList: [
+                    {
+                        code: 'wizznetwork1',
+                        symbol: 'WIZZ'
+                    },
+                    {
+                        code: 'naturetokenc',
+                        symbol: 'NXT'
+                    }
+                ],
                 keyword: '',
                 eosApi: null
             }
@@ -84,6 +96,44 @@
             getBlock(bid) {
                 let self = this
                 return self.eosApi.getBlock(bid)
+            },
+            getTransaction(tid) {
+                let self = this
+                return self.eosApi.getTransaction(tid)
+            },
+            getAccount(acc) {
+                let self = this
+                return self.eosApi.getAccount(acc)
+            },
+            getBalances(acc) {
+                let self = this
+                let ps = []
+                for (let i in self.tokenList) {
+                    let obj = self.tokenList[i]
+                    let newObj = {
+                        code: obj.code,
+                        symbol: obj.symbol,
+                        balance: 0
+                    }
+                    let p = self.eosApi.getCurrencyBalance(newObj.code, acc, newObj.symbol).then(r => {
+                        if (r.length == 1) {
+                            newObj.balance = r[0]
+                        } else {
+                            newObj.balance = 0
+                        }
+                        return newObj
+                    }).catch(e => {
+                        console.log(e)
+                        newObj.balance = 0
+                        return newObj
+                    })
+                    ps.push(p)
+                }
+                return Promise.all(ps)
+            },
+            getActions(acc) {
+                let self = this
+                return self.eosApi.getActions(acc, -1, -20)
             }
         }
     }
