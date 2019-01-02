@@ -1,17 +1,26 @@
 <template>
     <div>
         <b-breadcrumb :items="items"/>
+        <b-card v-if="block == null"
+                :title="`区块 # ${block_num}`"
+                tag="article"
+                style=""
+                class="mb-2">
+            <p class="card-text">
+                查无此区块
+            </p>
+        </b-card>
         <b-card v-if="block != null"
                 :title="`区块 # ${block_num}`"
                 tag="article"
                 style=""
                 class="mb-2">
             <p class="card-text">
-                <b-row>
-                    <b-col xs="12" class="block-text">
-                        状态：
-                    </b-col>
-                </b-row>
+                <!--<b-row>-->
+                <!--<b-col xs="12" class="block-text">-->
+                <!--状态：-->
+                <!--</b-col>-->
+                <!--</b-row>-->
                 <b-row>
                     <b-col xs="12" sm="6" class="block-text">
                         出块时间：{{GetMoment(block.timestamp)}}
@@ -36,9 +45,19 @@
             </p>
         </b-card>
         <b-card v-if="block != null"
-                no-body style="margin-top: 16px; font-size: 15px;">
+                no-body style="margin-top: 16px; font-size: 14px;">
             <b-tabs card>
                 <b-tab :title="`交易(${block.transactions.length})`" active>
+                    <b-card no-body class="block-tr d-none d-md-block d-lg-block">
+                        <b-row>
+                            <b-col xs="12" sm="12" md="2" style="display: flex; align-items: center;">
+                                交易
+                            </b-col>
+                            <b-col xs="12" sm="12" md="10" style="display: flex; align-items: center;">
+                                交易数据
+                            </b-col>
+                        </b-row>
+                    </b-card>
                     <b-card no-body v-for="(tr, index) in block.transactions" :key="'tr_' + index" class="block-tr">
                         <b-row>
                             <b-col xs="12" sm="2" style="display: flex; align-items: center;">
@@ -109,6 +128,8 @@
             // 如果路由有变化，会再次执行该方法
             '$route': function () {
                 this.block_num = Number.parseInt(this.$route.params.block_num)
+                this.block = null
+                this.items[1].text = `区块 # ${this.block_num}`
                 this.GetInfo()
             }
         },
@@ -121,8 +142,10 @@
                 self.$parent.getBlock(self.block_num).then(r => {
                     // console.log(r)
                     self.block = r
+                    self.$parent.StopLoading()
                 }).catch(e => {
                     console.log(e)
+                    self.$parent.StopLoading()
                 })
             },
             GoBlock(block_num) {

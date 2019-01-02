@@ -1,17 +1,26 @@
 <template>
     <div>
-        <b-breadcrumb :items="items"/>
+        <b-breadcrumb :items="items" class="sak-text"/>
+        <b-card v-if="trx == null"
+                :title="`交易 ${trx_id}`"
+                tag="article"
+                style=""
+                class="mb-2">
+            <p class="card-text">
+                查无此交易
+            </p>
+        </b-card>
         <b-card v-if="trx != null"
                 :title="`交易 ${trx_id}`"
                 tag="article"
                 style=""
                 class="mb-2">
             <p class="card-text">
-                <b-row>
-                    <b-col xs="12" class="transaction-text">
-                        状态：
-                    </b-col>
-                </b-row>
+                <!--<b-row>-->
+                <!--<b-col xs="12" class="transaction-text">-->
+                <!--状态：-->
+                <!--</b-col>-->
+                <!--</b-row>-->
                 <b-row>
                     <b-col xs="12" sm="6" class="transaction-text">
                         区块时间：{{GetMoment(trx.block_time)}}
@@ -41,9 +50,19 @@
             </p>
         </b-card>
         <b-card v-if="trx != null"
-                no-body style="margin-top: 16px; font-size: 15px;">
+                no-body style="margin-top: 16px; font-size: 14px;">
             <b-tabs card>
                 <b-tab :title="`Actions(${trx.trx.trx.actions.length})`" active v-if="trx.trx.trx != undefined">
+                    <b-card no-body class="transaction-tr d-none d-md-block d-lg-block">
+                        <b-row>
+                            <b-col xs="12" sm="12" md="3" style="display: flex; align-items: center;">
+                                合约和方法
+                            </b-col>
+                            <b-col xs="12" sm="12" md="9" style="display: flex; align-items: center;">
+                                交易数据
+                            </b-col>
+                        </b-row>
+                    </b-card>
                     <b-card no-body v-for="(ac, index) in trx.trx.trx.actions" :key="'ac_' + index"
                             class="transaction-tr">
                         <b-row>
@@ -101,6 +120,8 @@
             // 如果路由有变化，会再次执行该方法
             '$route': function () {
                 this.trx_id = this.$route.params.trx_id
+                this.trx = null
+                this.items[1].text = `交易 ${this.trx_id}`
                 this.GetInfo()
             }
         },
@@ -113,8 +134,10 @@
                 self.$parent.getTransaction(self.trx_id).then(r => {
                     // console.log(r)
                     self.trx = r
+                    self.$parent.StopLoading()
                 }).catch(e => {
                     console.log(e)
+                    self.$parent.StopLoading()
                 })
             },
             GoBlock(block_num) {

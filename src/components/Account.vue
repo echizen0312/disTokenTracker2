@@ -1,6 +1,15 @@
 <template>
     <div>
         <b-breadcrumb :items="items"/>
+        <b-card v-if="account == null"
+                :title="`账户 ${account_name}`"
+                tag="article"
+                style=""
+                class="mb-2">
+            <p class="card-text">
+                查无此账户
+            </p>
+        </b-card>
         <b-card v-if="account != null"
                 :title="`账户 ${account_name}`"
                 tag="article"
@@ -12,7 +21,9 @@
                         <b-row>
                             <b-col xs="12" sm="12">
                                 <div style="margin-bottom: 4px;">主币余额</div>
-                                <div style="font-size: 20px;">{{account.core_liquid_balance}}</div>
+                                <div style="font-size: 20px;">{{account.core_liquid_balance == undefined ? '0.0000' :
+                                    account.core_liquid_balance}}
+                                </div>
                             </b-col>
                         </b-row>
                     </b-col>
@@ -22,7 +33,8 @@
                                 <div style="margin-bottom: 8px;">RAM</div>
                                 <b-progress :value="((account.ram_quota - account.ram_usage) / account.ram_quota * 100)"
                                             height="0.8rem" style="margin-bottom: 6px;"></b-progress>
-                                <div style="margin-bottom: 8px;">剩余 {{getByteSize(account.ram_quota -
+                                <div v-if="account.ram_quota == -1" style="margin-bottom: 8px;">-</div>
+                                <div v-else style="margin-bottom: 8px;">剩余 {{getByteSize(account.ram_quota -
                                     account.ram_usage)}}/{{getByteSize(account.ram_quota)}}
                                 </div>
                             </b-col>
@@ -30,7 +42,8 @@
                                 <div style="margin-bottom: 8px;">CPU</div>
                                 <b-progress :value="(account.cpu_limit.available / account.cpu_limit.max * 100)"
                                             height="0.8rem" style="margin-bottom: 6px;"></b-progress>
-                                <div style="margin-bottom: 8px;">剩余
+                                <div v-if="account.cpu_limit.max == -1" style="margin-bottom: 8px;">-</div>
+                                <div v-else style="margin-bottom: 8px;">剩余
                                     {{getTimeSize(account.cpu_limit.available)}}/{{getTimeSize(account.cpu_limit.max)}}
                                 </div>
                             </b-col>
@@ -38,7 +51,8 @@
                                 <div style="margin-bottom: 8px;">NET</div>
                                 <b-progress :value="(account.net_limit.available / account.net_limit.max * 100)"
                                             height="0.8rem" style="margin-bottom: 6px;"></b-progress>
-                                <div style="margin-bottom: 8px;">剩余
+                                <div v-if="account.net_limit.max == -1" style="margin-bottom: 8px;">-</div>
+                                <div v-else style="margin-bottom: 8px;">剩余
                                     {{getByteSize(account.net_limit.available)}}/{{getByteSize(account.net_limit.max)}}
                                 </div>
                             </b-col>
@@ -69,27 +83,44 @@
                 </b-row>
             </p>
         </b-card>
-        <b-card no-body style="margin-top: 16px; font-size: 15px;">
+        <b-card v-if="account != null"
+                no-body style="margin-top: 16px; font-size: 14px;">
             <b-tabs card>
                 <b-tab :title="`Actions(${actions.length})`" active>
+                    <b-card no-body class="account-tr d-none d-md-block d-lg-block">
+                        <b-row>
+                            <b-col xs="12" sm="12" md="1" style="display: flex; align-items: center;">
+                                交易
+                            </b-col>
+                            <b-col xs="12" sm="12" md="2" style="display: flex; align-items: center;">
+                                交易时间
+                            </b-col>
+                            <b-col xs="12" sm="12" md="3" style="display: flex; align-items: center;">
+                                合约和方法
+                            </b-col>
+                            <b-col xs="12" sm="12" md="5" style="display: flex; align-items: center;">
+                                交易数据
+                            </b-col>
+                        </b-row>
+                    </b-card>
                     <b-card no-body v-for="(ac, index) in actions" :key="'ac_' + index"
                             class="account-tr">
                         <b-row>
-                            <b-col xs="12" sm="12" md="2" style="display: flex; align-items: center;">
+                            <b-col xs="12" sm="12" md="1" style="display: flex; align-items: center;">
                                 <div class="sak-text">
                                     <span style="cursor: pointer; color: #007bff;"
                                           @click="GoTransaction(ac.action_trace.trx_id)">{{ac.action_trace.trx_id}}
                                     </span>
                                 </div>
                             </b-col>
-                            <b-col xs="12" sm="12" md="3" style="display: flex; align-items: center;">
+                            <b-col xs="12" sm="12" md="2" style="display: flex; align-items: center;">
                                 {{GetMoment(ac.block_time)}}
                             </b-col>
                             <b-col xs="12" sm="12" md="3" style="display: flex; align-items: center;">
                                 <span style="cursor: pointer; color: #007bff;"
                                       @click="GoAccount(ac.action_trace.act.account)">{{ac.action_trace.act.account}}</span>::{{ac.action_trace.act.name}}
                             </b-col>
-                            <b-col xs="12" sm="12" md="4" style="display: flex; align-items: center;">
+                            <b-col xs="12" sm="12" md="5" style="display: flex; align-items: center;">
                                         <pre style="margin-bottom: 0;">
 {{JSON.stringify(ac.action_trace.act.data, null, 4)}}
                                         </pre>
@@ -137,6 +168,8 @@
             // 如果路由有变化，会再次执行该方法
             '$route': function () {
                 this.account_name = this.$route.params.account_name
+                this.account = null
+                this.items[1].text = `账户 ${this.account_name}`
                 this.GetInfo()
             }
         },
@@ -146,25 +179,30 @@
             },
             GetInfo() {
                 let self = this
-                self.$parent.getAccount(self.account_name).then(r => {
+                let p1 = self.$parent.getAccount(self.account_name).then(r => {
                     // console.log(r)
                     self.account = r
                 }).catch(e => {
                     console.log(e)
                 })
-                self.$parent.getBalances(self.account_name).then(r => {
+                let p2 = self.$parent.getBalances(self.account_name).then(r => {
                     // console.log(r)
                     self.accountTokenList = r
                 }).catch(e => {
                     console.log(e)
                 })
-                self.$parent.getActions(self.account_name).then(r => {
+                let p3 = self.$parent.getActions(self.account_name).then(r => {
                     // console.log(r)
                     let res = r.actions.reverse()
                     // console.log(res)
                     self.actions = res
                 }).catch(e => {
                     console.log(e)
+                })
+                Promise.all([p1, p2, p3]).then(() => {
+                    self.$parent.StopLoading()
+                }).catch(() => {
+                    self.$parent.StopLoading()
                 })
             },
             getByteSize: function (net) {
