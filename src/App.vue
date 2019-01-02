@@ -48,7 +48,7 @@
         name: 'App',
         data() {
             return {
-                title: 'disTokenTracker',
+                title: title,
                 netConfigList: netConfigList,
                 netConfig: null,
                 keyword: '',
