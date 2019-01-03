@@ -120,10 +120,46 @@
                                 <span style="cursor: pointer; color: #007bff;"
                                       @click="GoAccount(ac.action_trace.act.account)">{{ac.action_trace.act.account}}</span>::{{ac.action_trace.act.name}}
                             </b-col>
-                            <b-col xs="12" sm="12" md="5" style="display: flex; align-items: center;">
-                                        <pre style="margin-bottom: 0;">
+                            <b-col xs="12" sm="12" md="6"
+                                   style="display: flex; justify-content: flex-start; align-items: flex-start; flex-direction: column;">
+                                <template
+                                        v-if="ac.action_trace.act.name == 'transfer' || ac.action_trace.act.name == 'issue'">
+                                    <div style="width: 100%; height: 24px; display: flex; align-items: center;">
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.action_trace.act.name == 'transfer'">转账方向
+                                        </b-badge>
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.action_trace.act.name == 'issue'">发行代币
+                                        </b-badge>
+                                        <span style="cursor: pointer; color: #007bff;"
+                                              @click="GoAccount(ac.action_trace.act.data.from)">
+                                            {{ac.action_trace.act.data.from}}
+                                        </span>
+                                        <span style="margin-left: 8px; margin-right: 8px;">
+                                            ->
+                                        </span>
+                                        <span style="cursor: pointer; color: #007bff;"
+                                              @click="GoAccount(ac.action_trace.act.data.to)">
+                                            {{ac.action_trace.act.data.to}}
+                                        </span>
+                                    </div>
+                                    <div style="width: 100%; height: 24px; display: flex; align-items: center;">
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.action_trace.act.name == 'transfer'">转账金额
+                                        </b-badge>
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.action_trace.act.name == 'issue'">发行金额
+                                        </b-badge>
+                                        {{ac.action_trace.act.data.quantity}}
+                                    </div>
+                                    <div style="width: 100%; min-height: 24px; display: flex; align-items: center; word-break: break-all;">
+                                        <b-badge variant="secondary" style="margin-right: 19px;">MEMO</b-badge>
+                                        {{ac.action_trace.act.data.memo}}
+                                    </div>
+                                </template>
+                                <pre v-else style="margin-bottom: 0;">
 {{JSON.stringify(ac.action_trace.act.data, null, 4)}}
-                                        </pre>
+                                </pre>
                             </b-col>
                         </b-row>
                     </b-card>
@@ -191,11 +227,9 @@
                 }).catch(e => {
                     console.log(e)
                 })
-                let p3 = self.$parent.getActions(self.account_name).then(r => {
+                let p3 = self.getSelfActions(self.account_name).then(r => {
                     // console.log(r)
-                    let res = r.actions.reverse()
-                    // console.log(res)
-                    self.actions = res
+                    self.actions = r
                 }).catch(e => {
                     console.log(e)
                 })
@@ -203,6 +237,31 @@
                     self.$parent.StopLoading()
                 }).catch(() => {
                     self.$parent.StopLoading()
+                })
+            },
+            getSelfActions(acc) {
+                let self = this
+                return new Promise((resolve, reject) => {
+                    self.$parent.getActions(acc).then(r => {
+                        // console.log(r)
+                        let res = r.actions.reverse()
+                        let t_res = []
+                        for (let i in res) {
+                            let tmp = res[i]
+                            if (tmp.action_trace.act.name == 'transfer' && tmp.action_trace.receipt.receiver != acc) {
+                                continue
+                            } else {
+                                t_res.push(tmp)
+                            }
+                            if (t_res.length == 20) {
+                                break
+                            }
+                        }
+                        resolve(t_res)
+                    }).catch(e => {
+                        console.log(e)
+                        reject()
+                    })
                 })
             },
             getByteSize: function (net) {

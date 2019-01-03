@@ -173,7 +173,7 @@
             getActions(acc) {
                 let self = this
                 self.StartLoading()
-                return self.eosApi.getActions(acc, -1, -10)
+                return self.eosApi.getActions(acc, -1, -30)
             }
         }
     }

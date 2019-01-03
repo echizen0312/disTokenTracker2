@@ -69,10 +69,45 @@
                             <b-col xs="12" sm="3" style="display: flex; align-items: center;">
                                 <span style="cursor: pointer; color: #007bff;" @click="GoAccount(ac.account)">{{ac.account}}</span>::{{ac.name}}
                             </b-col>
-                            <b-col xs="12" sm="9" style="display: flex; align-items: center;">
-                                        <pre style="margin-bottom: 0;">
+                            <b-col xs="12" sm="9"
+                                   style="display: flex; justify-content: flex-start; align-items: flex-start; flex-direction: column;">
+                                <template v-if="ac.name == 'transfer' || ac.name == 'issue'">
+                                    <div style="width: 100%; height: 24px; display: flex; align-items: center;">
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.name == 'transfer'">转账方向
+                                        </b-badge>
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.name == 'issue'">发行代币
+                                        </b-badge>
+                                        <span style="cursor: pointer; color: #007bff;"
+                                              @click="GoAccount(ac.data.from)">
+                                            {{ac.data.from}}
+                                        </span>
+                                        <span style="margin-left: 8px; margin-right: 8px;">
+                                            ->
+                                        </span>
+                                        <span style="cursor: pointer; color: #007bff;"
+                                              @click="GoAccount(ac.data.to)">
+                                            {{ac.data.to}}
+                                        </span>
+                                    </div>
+                                    <div style="width: 100%; height: 24px; display: flex; align-items: center;">
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.name == 'transfer'">转账金额
+                                        </b-badge>
+                                        <b-badge variant="secondary" style="margin-right: 10px;"
+                                                 v-if="ac.name == 'issue'">发行金额
+                                        </b-badge>
+                                        {{ac.data.quantity}}
+                                    </div>
+                                    <div style="width: 100%; min-height: 24px; display: flex; align-items: center; word-break: break-all;">
+                                        <b-badge variant="secondary" style="margin-right: 19px;">MEMO</b-badge>
+                                        {{ac.data.memo}}
+                                    </div>
+                                </template>
+                                <pre v-else style="margin-bottom: 0;">
 {{JSON.stringify(ac.data, null, 4)}}
-                                        </pre>
+                                </pre>
                             </b-col>
                         </b-row>
                     </b-card>
