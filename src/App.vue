@@ -115,7 +115,7 @@
             //======================== db =========================
             getNewTrx() {
                 let self = this
-                self.StartLoading()
+                // self.StartLoading()
                 if (self.netConfig.dbAddress != '') {
                     return self.$http.get(`${self.netConfig.dbAddress}/eosSak/db/GetNewTransactionsNew`)
                 } else {
@@ -125,7 +125,7 @@
             //======================== api =========================
             getInfo() {
                 let self = this
-                self.StartLoading()
+                // self.StartLoading()
                 return self.eosApi.getInfo({})
             },
             getBlock(bid) {

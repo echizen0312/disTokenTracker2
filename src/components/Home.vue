@@ -33,6 +33,10 @@
                 style="margin-top: 16px; font-size: 14px;"
                 class="mb-2">
             <p class="card-text" style="padding-top: 12px;">
+                <b-form-checkbox v-if="$parent.netConfig.netId != '999'" v-model="isAuto"
+                                 style="position: absolute; top: 24px; right: 6px; font-size: 16px;">
+                    自动刷新
+                </b-form-checkbox>
                 <b-card v-if="$parent.netConfig.netId == '999'" no-body class="home-tr">
                     <b-row>
                         <b-col xs="12" sm="12">
@@ -84,25 +88,34 @@
         data() {
             return {
                 info: null,
-                newTrx: []
+                newTrx: [],
+                isAuto: false
             }
         },
         created() {
             let self = this
-            self.GetInfo()
+            self.GetInfo(true)
+            setInterval(() => {
+                if (self.isAuto) {
+                    self.GetInfo(false)
+                }
+            }, 3000)
         },
         watch: {
             // 如果路由有变化，会再次执行该方法
-            '$route': function () {
-                this.GetInfo()
-            }
+            // '$route': function () {
+            //     this.GetInfo()
+            // }
         },
         methods: {
             GetMoment: function (date, offset) {
                 return moment(date).utcOffset(offset).format('YYYY-MM-DD HH:mm:ss')
             },
-            GetInfo() {
+            GetInfo(mask) {
                 let self = this
+                if (mask) {
+                    self.$parent.StartLoading()
+                }
                 let p1 = self.$parent.getInfo().then(r => {
                     // console.log(r)
                     self.info = r
